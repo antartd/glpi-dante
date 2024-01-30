@@ -1,0 +1,33 @@
+version: "1.0"
+
+
+volumes:
+  db_data:
+  static:
+  media:
+
+
+services:
+  db:
+    image: mariadb
+    restart: always
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD=pass
+
+  gateway:
+    build: ./nginx/
+    env_file: .env
+    ports:
+      - 8080:80
+    volumes:
+      - static:/staticfiles/
+      - media://media
+    depends_on:
+      - db
+      - php
+
+  php:
+
