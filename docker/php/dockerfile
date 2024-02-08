@@ -1,10 +1,42 @@
-FROM php:8.3-fpm
-
+FROM php:8.2-fpm
 WORKDIR /var/www
-
-RUN apt-get update && apt-get install -y \
-		libfreetype-dev \
-		libjpeg62-turbo-dev \
-		libpng-dev \
-	&& docker-php-ext-configure gd --with-freetype --with-jpeg \
-	&& docker-php-ext-install -j$(nproc) gd
+RUN apt-get update \
+    # Install APCU PHP extension
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && echo "apc.enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini \
+    # Install core-dev packages for PHP extensions
+    && apt-get install --assume-yes --no-install-recommends --quiet \
+      libbz2-dev \
+      libfreetype6-dev \
+      libjpeg-dev \
+      libpng-dev \
+      libicu-dev \
+      libldap2-dev \
+      libxml2-dev \
+      libzip-dev \
+      # Install cron service
+      cron \
+      # Install acl to manage acl of writable directories
+      acl \
+    # Install PHP extensions: bz2, exif, mysqli, opcache, soap
+    && docker-php-ext-install bz2 \
+        exif \
+        mysqli \
+        opcache \
+        soap \
+    # Install gd PHP extension
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd \
+    # Install intl PHP extension
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install intl \
+    # Install ldap PHP extension
+    && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
+    && docker-php-ext-install ldap \
+    # Install zip PHP extension
+    && docker-php-ext-configure zip \
+    && docker-php-ext-install zip \
+    # Clear sources list
+    && rm -rf /var/lib/apt/lists/*
+CMD  ["php-fpm"]

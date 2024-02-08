@@ -1,0 +1,30 @@
+version: "3.0"
+
+volumes:
+  db-data:
+  static:
+
+services:
+  php:
+    build: ./php/
+    env_file: .env
+    depends_on:
+      - gateway
+    volumes:
+      - static:/var/www
+
+  mariadb:
+    image: mariadb
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - db-data:/var/lib/mysql
+
+  gateway:
+    build: ./nginx/
+    env_file: .env
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - static:/var/www
